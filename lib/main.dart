@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:libreria_flutter/widget/login_form.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,14 +11,20 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark(),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Your library'),
-        ),
-        body: const Text("pippo"),
-        bottomNavigationBar: const Text('Mario'),
-      )
+      theme: ThemeData(brightness: Brightness.light),
+      darkTheme: ThemeData(brightness: Brightness.dark),
+      themeMode: ThemeMode.dark,
+      title: "Your library",
+      routes: <String, WidgetBuilder>{
+        "/": (BuildContext context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text("Your library"),
+            ),
+            body: const LoginForm(),
+          );
+        },
+      },
     );
   }
 }
