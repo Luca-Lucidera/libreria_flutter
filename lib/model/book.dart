@@ -1,13 +1,15 @@
+import 'dart:ffi';
+
 class Book {
   final String id;
   final String title;
-  final String purchased;
-  final String read;
+  final int purchased;
+  final int read;
   final String type;
   final String status;
   final String publisher;
   final String price;
-  final String rating;
+  final int rating;
   final String comment;
 
   Book(this.id, this.title, this.purchased, this.read, this.type, this.status,
@@ -21,7 +23,7 @@ class Book {
         type = json['type'],
         status = json['status'],
         publisher = json['publisher'],
-        price = json['price'],
+        price = '${json['price']}',
         rating = json['rating'],
         comment = json['comment'];
   Map<String, dynamic> toJson() => {
