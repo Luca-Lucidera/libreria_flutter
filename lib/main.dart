@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
-import 'widget/home.dart';
-import 'widget/custom_bottom_app_bar.dart';
+import 'package:libreria_flutter/model/user.dart';
+import 'package:libreria_flutter/views/home.dart';
+import 'package:libreria_flutter/views/login.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => User()),
+      ],
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -17,26 +26,11 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
       ),
       title: "Your library",
-      home: Scaffold(
-        appBar: AppBar(
-          elevation: 6,
-          leading: const Icon(Icons.menu_book_rounded),
-          title: const Text("Your library"),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout_rounded),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        body: const HomePage(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          child: const Icon(Icons.add),
-        ),
-        bottomNavigationBar: const CustomBottomAppBar(),
-      ),
+      initialRoute: '/',
+      routes: {
+        '/': (BuildContext context) => const HomePage(),
+        '/login': (BuildContext context) => const LoginPage(),
+      },
     );
   }
 }
