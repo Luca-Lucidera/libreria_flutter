@@ -190,7 +190,7 @@ class BookCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(20.0),
                         child: Text(
                           book.title,
                           style: Theme.of(context).textTheme.headlineMedium,
@@ -200,39 +200,39 @@ class BookCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(10.0),
                             child: Text('Purchased: ${book.purchased}'),
                           ),
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(10.0),
                             child: Text('Read: ${book.read}'),
                           ),
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(10.0),
                         child: Text(book.status),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(book.type),
+                            padding: const EdgeInsets.all(10.0),
+                            child: Text('Status: ${book.type}'),
                           ),
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(book.publisher),
+                            padding: const EdgeInsets.all(10.0),
+                            child: Text('Publisher: ${book.publisher}'),
                           ),
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text('${book.price}€'),
+                        padding: const EdgeInsets.all(10.0),
+                        child: Text('Price: ${book.price}€'),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text('${book.rating}'),
+                        padding: const EdgeInsets.all(20.0),
+                        child: Text('Rating: ${book.rating}/5'),
                       ),
                     ],
                   ),
