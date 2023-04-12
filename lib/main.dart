@@ -2,17 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:libreria_flutter/model/user.dart';
 import 'package:libreria_flutter/views/home.dart';
 import 'package:libreria_flutter/views/login.dart';
-import 'package:provider/provider.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => User()),
-      ],
-      child: const MainApp(),
-    ),
-  );
+  runApp(const MainApp());
 }
 
 class MainApp extends StatelessWidget {

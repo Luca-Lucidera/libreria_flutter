@@ -8,7 +8,6 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:libreria_flutter/model/user.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -23,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
-    final user = Provider.of<User>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -107,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       );
                       if (response.statusCode == 200 && context.mounted) {
-                        user.fromJson(response.data);
+                        User.fromJson(response.data);
                         await Navigator.of(context).pushReplacementNamed('/');
                       }
                     }
