@@ -90,23 +90,47 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () async {
                     if (formKey.currentState!.validate()) {
                       final dio = Dio();
-                      final Directory appDocDir = await getApplicationDocumentsDirectory();
+                      final Directory appDocDir =
+                          await getApplicationDocumentsDirectory();
                       final String appDocPath = appDocDir.path;
                       final jar = PersistCookieJar(
                         ignoreExpires: false,
                         storage: FileStorage("$appDocPath/.cookies/"),
                       );
                       dio.interceptors.add(CookieManager(jar));
-                      final response = await dio.post(
-                        'https://mia-libreria.vercel.app/api/auth/login',
-                        data: {
-                          "email": emailController.text,
-                          "password": passwordController.text
-                        },
-                      );
-                      if (response.statusCode == 200 && context.mounted) {
-                        User.fromJson(response.data);
-                        await Navigator.of(context).pushReplacementNamed('/');
+                      try {
+                        final response = await dio.post(
+                          'https://mia-libreria.vercel.app/api/auth/login',
+                          data: {
+                            "email": emailController.text,
+                            "password": passwordController.text
+                          },
+                        );
+                        if (response.statusCode == 200 && context.mounted) {
+                          User.fromJson(response.data);
+                          await Navigator.of(context).pushReplacementNamed('/');
+                        }
+                      } on DioError catch (error) {
+                        if (context.mounted) {
+                          if(error.response!.statusCode != 500) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Invalid credentials'),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Server error'),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.deepOrange,
+                              ),
+                            );
+                          }
+
+                        }
                       }
                     }
                   },

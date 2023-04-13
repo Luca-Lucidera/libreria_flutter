@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
@@ -165,10 +166,14 @@ class BookCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(6.0),
-            child: Text(
-              book.title.substring(
-                  0, book.title.length > 16 ? 16 : book.title.length),
-              style: Theme.of(context).textTheme.bodyLarge,
+            child: SizedBox(
+              child: Text(
+                book.title.length < 35
+                    ? book.title
+                    : book.title.substring(0, 35),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ),
           ),
           Padding(
@@ -185,60 +190,299 @@ class BookCard extends StatelessWidget {
               child: const Text("Show more"),
               onPressed: () => showDialog(
                 context: context,
-                builder: (BuildContext context) => Dialog(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Text(
-                          book.title,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Text('Purchased: ${book.purchased}'),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Text('Read: ${book.read}'),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Text(book.status),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Text('Status: ${book.type}'),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Text('Publisher: ${book.publisher}'),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Text('Price: ${book.price}€'),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Text('Rating: ${book.rating}/5'),
-                      ),
-                    ],
-                  ),
-                ),
+                builder: (BuildContext context) => BookDialog(book: book),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BookDialog extends StatefulWidget {
+  const BookDialog({Key? key, required this.book}) : super(key: key);
+  final Book book;
+
+  @override
+  State<BookDialog> createState() => _BookDialogState();
+}
+
+class _BookDialogState extends State<BookDialog> {
+  bool edit = false;
+  late Book bookToEdit = Book.empty();
+  TextEditingController titleController = TextEditingController(text: "");
+  TextEditingController priceController = TextEditingController(text: "");
+
+  @override
+  void initState() {
+    bookToEdit = Book.cloneWith(widget.book);
+    titleController = TextEditingController(text: bookToEdit.title);
+    priceController = TextEditingController(text: bookToEdit.price.toString());
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    bookToEdit = Book.empty();
+    titleController = TextEditingController(text: "");
+    priceController = TextEditingController(text: "");
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  child: !edit
+                      ? Text(
+                          widget.book.title,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        )
+                      : TextFormField(
+                          controller: titleController,
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: !edit
+                    ? Text('Purchased: ${widget.book.purchased}')
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Purchased: ${bookToEdit.purchased}',
+                            textAlign: TextAlign.center,
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: () {
+                              if (bookToEdit.purchased > 1) {
+                                setState(() {
+                                  bookToEdit.purchased--;
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.remove),
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: () {
+                              if (bookToEdit.purchased < 999) {
+                                setState(() {
+                                  bookToEdit.purchased++;
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: !edit
+                    ? Text('Read: ${widget.book.read}')
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Read: ${bookToEdit.read}',
+                            textAlign: TextAlign.center,
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: () {
+                              if (bookToEdit.read > 0) {
+                                setState(() {
+                                  bookToEdit.read--;
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.remove),
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: () {
+                              if (bookToEdit.purchased > bookToEdit.read) {
+                                setState(() {
+                                  bookToEdit.read++;
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: !edit
+                    ? Text(widget.book.status)
+                    : DropdownButton<String>(
+                        value: bookToEdit.status,
+                        items: const [
+                          DropdownMenuItem(
+                            value: "To Read",
+                            child: Text("To Read"),
+                          ),
+                          DropdownMenuItem(
+                            value: "Reading",
+                            child: Text("Reading"),
+                          ),
+                          DropdownMenuItem(
+                            value: "Compete",
+                            child: Text("Complete"),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            bookToEdit.status = value!;
+                          });
+                        },
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: !edit
+                    ? Text(widget.book.type)
+                    : DropdownButton<String>(
+                        value: bookToEdit.type,
+                        items: const [
+                          DropdownMenuItem(
+                            value: "Manga",
+                            child: Text("Manga"),
+                          ),
+                          DropdownMenuItem(
+                            value: "Novel",
+                            child: Text("Novel"),
+                          ),
+                          DropdownMenuItem(
+                            value: "Light Novel",
+                            child: Text("Light Novel"),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            bookToEdit.type = value!;
+                          });
+                        },
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: !edit
+                    ? Text(widget.book.publisher)
+                    : DropdownButton<String>(
+                        value: bookToEdit.publisher,
+                        items: const [
+                          DropdownMenuItem(
+                            value: "JPOP",
+                            child: Text("JPOP"),
+                          ),
+                          DropdownMenuItem(
+                            value: "Star Comics",
+                            child: Text("Star Comics"),
+                          ),
+                          DropdownMenuItem(
+                            value: "Planet Manga",
+                            child: Text("Planet Manga"),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            bookToEdit.publisher = value!;
+                          });
+                        },
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  child: !edit
+                      ? Text(
+                          widget.book.rating.toString(),
+                          textAlign: TextAlign.center,
+                        )
+                      : SizedBox(
+                          width: 100,
+                          child: TextFormField(
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            controller: priceController,
+                          ),
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: !edit
+                    ? Text('Rating: ${widget.book.rating}/5')
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Rating: ${bookToEdit.rating}/5',
+                            textAlign: TextAlign.center,
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: () {},
+                            icon: const Icon(Icons.remove),
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: () {},
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: !edit
+                    ? FloatingActionButton.extended(
+                        onPressed: () {
+                          setState(() {
+                            edit = true;
+                          });
+                        },
+                        label: const Text("Edit"),
+                        icon: const Icon(Icons.edit),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          FloatingActionButton.extended(
+                            onPressed: () {
+                              setState(() {
+                                edit = false;
+                              });
+                            },
+                            label: const Text("Close"),
+                            icon: const Icon(Icons.close),
+                          ),
+                          FloatingActionButton.extended(
+                            onPressed: () {
+                              setState(() {
+                                edit = false;
+                              });
+                            },
+                            label: const Text("Save"),
+                            icon: const Icon(Icons.save),
+                          ),
+                        ],
+                      ),
+              )
+            ],
           ),
         ],
       ),

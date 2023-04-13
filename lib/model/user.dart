@@ -17,6 +17,16 @@ class User {
     );
   }
 
+  factory User.closeWith(User source) {
+    return User(
+      name: source.name,
+      lastName: source.lastName,
+      email: source.email,
+      password: source.password,
+      jwt: source.jwt,
+    );
+  }
+
   const User({
     required this.name,
     required this.lastName,
