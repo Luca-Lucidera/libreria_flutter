@@ -74,11 +74,11 @@ class _LoginPageState extends State<LoginPage> {
                       return "Please enter some text";
                     }
                     //explain the regex
-                    if (!RegExp(
-                            r"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~%]).{8,}$")
-                        .hasMatch(value)) {
-                      return "Password must contain at least 8 characters, one uppercase, one lowercase, \n one number and one special character";
-                    }
+                    // if (!RegExp(
+                    //         r"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~%]).{8,}$")
+                    //     .hasMatch(value)) {
+                    //   return "Password must contain at least 8 characters, one uppercase, one lowercase, \n one number and one special character";
+                    // }
                     return null;
                   },
                 ),

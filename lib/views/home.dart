@@ -2,10 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:cookie_jar/cookie_jar.dart';
-import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:libreria_flutter/model/dio_client.dart';
+import 'package:libreria_flutter/model/library.dart';
+import 'package:provider/provider.dart';
 import '../model/book.dart';
 import '../model/user.dart';
 
@@ -17,43 +16,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Future<List<Book>> _books;
   late Future<User> _user;
+  var _books;
 
-  Future<List<Book>> retriveBooks() async {
-    final dio = Dio();
-    final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final String appDocPath = appDocDir.path;
-    final jar = PersistCookieJar(
-      ignoreExpires: false,
-      storage: FileStorage("$appDocPath/.cookies/"),
-    );
-    dio.interceptors.add(CookieManager(jar));
-    await jar.loadForRequest(Uri.parse("https://mia-libreria.vercel.app"));
+  Future<User> getUser() async {
+    final BaseClient client = BaseClient();
     try {
-      final res = await dio.get('https://mia-libreria.vercel.app/api/books');
-      return res.data.map<Book>((json) => Book.fromJson(json)).toList();
-    } catch (error) {
-      if (context.mounted) {
-        await Navigator.of(context).pushReplacementNamed('/login');
-      }
-      rethrow;
-    }
-  }
-
-  Future<User> retriveUser() async {
-    final dio = Dio();
-    final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final String appDocPath = appDocDir.path;
-    final jar = PersistCookieJar(
-      ignoreExpires: false,
-      storage: FileStorage("$appDocPath/.cookies/"),
-    );
-    dio.interceptors.add(CookieManager(jar));
-    await jar.loadForRequest(Uri.parse("https://mia-libreria.vercel.app"));
-    try {
-      final res =
-          await dio.get('https://mia-libreria.vercel.app/api/auth/session');
+      await client.setupCookieForRequest();
+      final res = await client.dio
+          .get('https://mia-libreria.vercel.app/api/auth/session');
       return User.fromJson(res.data);
     } catch (error) {
       rethrow;
@@ -63,58 +34,59 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _books = retriveBooks();
-    _user = retriveUser();
+    _user = getUser();
+    _books = Provider.of<Library>(context).fetchBooks();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: FutureBuilder(
-            future: _user,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text('Your library ${snapshot.data!.name}');
-              }
-              return const Text('Your library');
-            },
-          ),
-        ),
-        body: FutureBuilder(
-          future: _books,
+      appBar: AppBar(
+        title: FutureBuilder(
+          future: _user,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return HomeBody(books: snapshot.data!);
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return Text('Your library ${snapshot.data!.name}');
             }
+            return const Text('Your library');
           },
         ),
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.add),
-          onPressed: () {},
+      ),
+      body: FutureBuilder(
+        future: _books,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return HomeBody(books: Provider.of<Library>(context).list);
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () {},
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.filter_alt_outlined),
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                builder: (BuildContext context) => const Text('pippo'),
+              ),
+            ),
+          ],
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
-        bottomNavigationBar: BottomAppBar(
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.filter_alt_outlined),
-                onPressed: () => showModalBottomSheet(
-                  context: context,
-                  builder: (BuildContext context) => const Text('pippo'),
-                ),
-              ),
-            ],
-          ),
-        ));
+      ),
+    );
   }
 }
 
@@ -404,11 +376,11 @@ class _BookDialogState extends State<BookDialog> {
                       ),
               ),
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 child: SizedBox(
                   child: !edit
                       ? Text(
-                          widget.book.rating.toString(),
+                          '${widget.book.price}',
                           textAlign: TextAlign.center,
                         )
                       : SizedBox(
