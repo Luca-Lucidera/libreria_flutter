@@ -19,4 +19,11 @@ class Library extends ChangeNotifier {
     _list = listOfBooks;
     notifyListeners();
   }
+
+  Future<void> updateBook(Book book) async {
+    BaseClient client = BaseClient();
+    await client.setupCookieForRequest();
+    await client.dio.put('/api/books', data: book.toJson());
+    await fetchBooks();
+  }
 }

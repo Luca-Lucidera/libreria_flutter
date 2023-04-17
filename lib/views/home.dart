@@ -6,6 +6,7 @@ import 'package:libreria_flutter/model/dio_client.dart';
 import 'package:libreria_flutter/model/library.dart';
 import 'package:provider/provider.dart';
 import '../model/book.dart';
+import '../model/filter.dart';
 import '../model/user.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,7 +18,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<User> _user;
-  var _books;
+  late Future<void> _books;
+  late Future<void> _filters;
 
   Future<User> getUser() async {
     final BaseClient client = BaseClient();
@@ -34,8 +36,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _user = getUser();
-    _books = Provider.of<Library>(context).fetchBooks();
+    try {
+      _user = getUser();
+      _books = Provider.of<Library>(context, listen: false).fetchBooks();
+      _filters = Provider.of<Filters>(context, listen: false).fetchFilters();
+    } catch (error) {
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 
   @override
@@ -45,7 +52,7 @@ class _HomePageState extends State<HomePage> {
         title: FutureBuilder(
           future: _user,
           builder: (context, snapshot) {
-            if (snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.done) {
               return Text('Your library ${snapshot.data!.name}');
             }
             return const Text('Your library');
@@ -55,7 +62,18 @@ class _HomePageState extends State<HomePage> {
       body: FutureBuilder(
         future: _books,
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(
+                child: ElevatedButton(
+                  child: const Text(
+                      'Si è verificato un errore, premi per tornare alla login'),
+                  onPressed: () async {
+                    await Navigator.of(context).pushReplacementNamed('/login');
+                  },
+                ),
+              );
+            }
             return HomeBody(books: Provider.of<Library>(context).list);
           } else {
             return const Center(
@@ -299,21 +317,16 @@ class _BookDialogState extends State<BookDialog> {
                 child: !edit
                     ? Text(widget.book.status)
                     : DropdownButton<String>(
-                        value: bookToEdit.status,
-                        items: const [
-                          DropdownMenuItem(
-                            value: "To Read",
-                            child: Text("To Read"),
-                          ),
-                          DropdownMenuItem(
-                            value: "Reading",
-                            child: Text("Reading"),
-                          ),
-                          DropdownMenuItem(
-                            value: "Compete",
-                            child: Text("Complete"),
-                          ),
-                        ],
+                         value: bookToEdit.status,
+                        items: Provider.of<Filters>(context, listen: false)
+                            .status
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             bookToEdit.status = value!;
@@ -327,20 +340,15 @@ class _BookDialogState extends State<BookDialog> {
                     ? Text(widget.book.type)
                     : DropdownButton<String>(
                         value: bookToEdit.type,
-                        items: const [
-                          DropdownMenuItem(
-                            value: "Manga",
-                            child: Text("Manga"),
-                          ),
-                          DropdownMenuItem(
-                            value: "Novel",
-                            child: Text("Novel"),
-                          ),
-                          DropdownMenuItem(
-                            value: "Light Novel",
-                            child: Text("Light Novel"),
-                          ),
-                        ],
+                        items: Provider.of<Filters>(context, listen: false)
+                            .type
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             bookToEdit.type = value!;
@@ -354,20 +362,15 @@ class _BookDialogState extends State<BookDialog> {
                     ? Text(widget.book.publisher)
                     : DropdownButton<String>(
                         value: bookToEdit.publisher,
-                        items: const [
-                          DropdownMenuItem(
-                            value: "JPOP",
-                            child: Text("JPOP"),
-                          ),
-                          DropdownMenuItem(
-                            value: "Star Comics",
-                            child: Text("Star Comics"),
-                          ),
-                          DropdownMenuItem(
-                            value: "Planet Manga",
-                            child: Text("Planet Manga"),
-                          ),
-                        ],
+                        items: Provider.of<Filters>(context, listen: false)
+                            .publisher
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             bookToEdit.publisher = value!;
@@ -408,11 +411,23 @@ class _BookDialogState extends State<BookDialog> {
                             textAlign: TextAlign.center,
                           ),
                           IconButton.filledTonal(
-                            onPressed: () {},
+                            onPressed: () {
+                              if (bookToEdit.rating > 0) {
+                                setState(() {
+                                  bookToEdit.rating -= 0.5;
+                                });
+                              }
+                            },
                             icon: const Icon(Icons.remove),
                           ),
                           IconButton.filledTonal(
-                            onPressed: () {},
+                            onPressed: () {
+                              if (bookToEdit.rating < 5) {
+                                setState(() {
+                                  bookToEdit.rating += 0.5;
+                                });
+                              }
+                            },
                             icon: const Icon(Icons.add),
                           ),
                         ],
@@ -443,10 +458,15 @@ class _BookDialogState extends State<BookDialog> {
                             icon: const Icon(Icons.close),
                           ),
                           FloatingActionButton.extended(
-                            onPressed: () {
+                            onPressed: () async {
+                              await Provider.of<Library>(context, listen: false)
+                                  .updateBook(bookToEdit);
                               setState(() {
                                 edit = false;
                               });
+                              if (mounted) {
+                                Navigator.of(context).pop();
+                              }
                             },
                             label: const Text("Save"),
                             icon: const Icon(Icons.save),

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:libreria_flutter/model/dio_client.dart';
+import 'package:libreria_flutter/model/filter.dart';
 import 'package:libreria_flutter/model/library.dart';
-import 'package:libreria_flutter/model/user.dart';
 import 'package:libreria_flutter/views/home.dart';
 import 'package:libreria_flutter/views/login.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => Library(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => Library()),
+        ChangeNotifierProvider(create: (context) => Filters()),
+      ],
       child: const MainApp(),
     ),
   );
