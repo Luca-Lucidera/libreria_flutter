@@ -58,6 +58,24 @@ class _HomePageState extends State<HomePage> {
             return const Text('Your library');
           },
         ),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              try {
+                final BaseClient client = BaseClient();
+                await client.setupCookieForRequest();
+                await client.dio.post('/api/auth/logout');
+              } catch (error) {
+                print(error.toString());
+              } finally {
+                if (mounted) {
+                  await Navigator.of(context).pushReplacementNamed('/login');
+                }
+              }
+            },
+            icon: const Icon(Icons.logout),
+          )
+        ],
       ),
       body: FutureBuilder(
         future: _books,
@@ -317,7 +335,7 @@ class _BookDialogState extends State<BookDialog> {
                 child: !edit
                     ? Text(widget.book.status)
                     : DropdownButton<String>(
-                         value: bookToEdit.status,
+                        value: bookToEdit.status,
                         items: Provider.of<Filters>(context, listen: false)
                             .status
                             .map(
