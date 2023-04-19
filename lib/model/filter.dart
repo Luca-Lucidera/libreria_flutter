@@ -8,6 +8,9 @@ class Filters extends ChangeNotifier {
   List<String> status = [];
   List<String> publisher = [];
 
+  String selectedType = "All";
+  String selectedStatus = "All";
+  String selectedPublisher = "All";
 
   final BaseClient _client = BaseClient();
 
@@ -22,6 +25,19 @@ class Filters extends ChangeNotifier {
     status = (res2.data as List).map((item) => item as String).toList();
     publisher = (res3.data as List).map((item) => item as String).toList();
 
+    notifyListeners();
+  }
+
+  void setSelectedType(String type) {
+    selectedType = type;
+    notifyListeners();
+  }
+  void setSelectedStatus(String status) {
+    selectedStatus = status;
+    notifyListeners();
+  }
+  void setSelectedPublisher(String publisher) {
+    selectedPublisher = publisher;
     notifyListeners();
   }
 }

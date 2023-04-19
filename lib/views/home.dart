@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:libreria_flutter/model/dio_client.dart';
@@ -19,7 +17,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late Future<User> _user;
   late Future<void> _books;
-  late Future<void> _filters;
 
   Future<User> getUser() async {
     final BaseClient client = BaseClient();
@@ -39,7 +36,7 @@ class _HomePageState extends State<HomePage> {
     try {
       _user = getUser();
       _books = Provider.of<Library>(context, listen: false).fetchBooks();
-      _filters = Provider.of<Filters>(context, listen: false).fetchFilters();
+      Provider.of<Filters>(context, listen: false).fetchFilters();
     } catch (error) {
       Navigator.of(context).pushReplacementNamed('/login');
     }
@@ -53,6 +50,9 @@ class _HomePageState extends State<HomePage> {
           future: _user,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasError) {
+                return const Text("Torna alla login o riavvia l'app");
+              }
               return Text('Your library ${snapshot.data!.name}');
             }
             return const Text('Your library');
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               );
             }
-            return HomeBody(books: Provider.of<Library>(context).list);
+            return const HomeBody();
           } else {
             return const Center(
               child: CircularProgressIndicator(),
@@ -102,7 +102,10 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () {},
+        onPressed: () => showDialog(
+          context: context,
+          builder: (context) => BookDialog(book: Book.empty(), isNewBook: true),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       bottomNavigationBar: BottomAppBar(
@@ -112,11 +115,120 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.settings_outlined),
               onPressed: () {},
             ),
-            IconButton(
-              icon: const Icon(Icons.filter_alt_outlined),
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                builder: (BuildContext context) => const Text('pippo'),
+            SizedBox(
+              child: IconButton(
+                icon: const Icon(Icons.filter_alt_outlined),
+                onPressed: () => showModalBottomSheet(
+                  context: context,
+                  builder: (context) {
+                    return SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height * 0.3,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text("Status"),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  child: DropdownButton(
+                                    value: Provider.of<Filters>(context)
+                                        .selectedStatus,
+                                    items: Provider.of<Filters>(context)
+                                        .status
+                                        .map(
+                                          (e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(e),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      Provider.of<Filters>(context,
+                                              listen: false)
+                                          .setSelectedStatus(value!);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text("Type"),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  child: DropdownButton(
+                                    value: Provider.of<Filters>(context)
+                                        .selectedType,
+                                    items: Provider.of<Filters>(context)
+                                        .type
+                                        .map(
+                                          (e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(e),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      Provider.of<Filters>(context,
+                                              listen: false)
+                                          .setSelectedType(value!);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text("Publisher"),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  child: DropdownButton(
+                                    value: Provider.of<Filters>(context)
+                                        .selectedPublisher,
+                                    items: Provider.of<Filters>(context)
+                                        .publisher
+                                        .map(
+                                          (e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(e),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      Provider.of<Filters>(context,
+                                              listen: false)
+                                          .setSelectedPublisher(value!);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -126,17 +238,16 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class HomeBody extends StatefulWidget {
-  const HomeBody({Key? key, required this.books}) : super(key: key);
-  final List<Book> books;
+class HomeBody extends StatelessWidget {
+  const HomeBody({Key? key}) : super(key: key);
 
-  @override
-  State<HomeBody> createState() => _HomeBodyState();
-}
-
-class _HomeBodyState extends State<HomeBody> {
   @override
   Widget build(BuildContext context) {
+    final sType = Provider.of<Filters>(context).selectedType;
+    final sPublisher = Provider.of<Filters>(context).selectedPublisher;
+    final sStatus = Provider.of<Filters>(context).selectedStatus;
+    final books =
+        Provider.of<Library>(context).filterBooks(sType, sStatus, sPublisher);
     return Column(
       children: [
         const Padding(
@@ -149,10 +260,10 @@ class _HomeBodyState extends State<HomeBody> {
               crossAxisCount: 2,
               mainAxisSpacing: 10.0,
             ),
-            itemCount: widget.books.length,
+            itemCount: books.length,
             itemBuilder: (BuildContext context, int index) {
               return BookCard(
-                book: widget.books.elementAt(index),
+                book: books.elementAt(index),
               );
             },
           ),
@@ -198,7 +309,8 @@ class BookCard extends StatelessWidget {
               child: const Text("Show more"),
               onPressed: () => showDialog(
                 context: context,
-                builder: (BuildContext context) => BookDialog(book: book),
+                builder: (BuildContext context) =>
+                    BookDialog(book: book, isNewBook: false),
               ),
             ),
           ),
@@ -209,8 +321,10 @@ class BookCard extends StatelessWidget {
 }
 
 class BookDialog extends StatefulWidget {
-  const BookDialog({Key? key, required this.book}) : super(key: key);
+  const BookDialog({Key? key, required this.book, required this.isNewBook})
+      : super(key: key);
   final Book book;
+  final bool isNewBook;
 
   @override
   State<BookDialog> createState() => _BookDialogState();
@@ -224,7 +338,11 @@ class _BookDialogState extends State<BookDialog> {
 
   @override
   void initState() {
-    bookToEdit = Book.cloneWith(widget.book);
+    if (!widget.isNewBook) {
+      bookToEdit = Book.cloneWith(widget.book);
+    } else {
+      edit = true;
+    }
     titleController = TextEditingController(text: bookToEdit.title);
     priceController = TextEditingController(text: bookToEdit.price.toString());
     super.initState();
@@ -259,6 +377,8 @@ class _BookDialogState extends State<BookDialog> {
                         )
                       : TextFormField(
                           controller: titleController,
+                          onChanged: (value) =>
+                              bookToEdit.title = titleController.text,
                         ),
                 ),
               ),
@@ -338,6 +458,7 @@ class _BookDialogState extends State<BookDialog> {
                         value: bookToEdit.status,
                         items: Provider.of<Filters>(context, listen: false)
                             .status
+                            .where((element) => element != "All")
                             .map(
                               (e) => DropdownMenuItem(
                                 value: e,
@@ -360,6 +481,7 @@ class _BookDialogState extends State<BookDialog> {
                         value: bookToEdit.type,
                         items: Provider.of<Filters>(context, listen: false)
                             .type
+                            .where((element) => element != "All")
                             .map(
                               (e) => DropdownMenuItem(
                                 value: e,
@@ -382,6 +504,7 @@ class _BookDialogState extends State<BookDialog> {
                         value: bookToEdit.publisher,
                         items: Provider.of<Filters>(context, listen: false)
                             .publisher
+                            .where((element) => element != "All")
                             .map(
                               (e) => DropdownMenuItem(
                                 value: e,
@@ -410,9 +533,12 @@ class _BookDialogState extends State<BookDialog> {
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r"[0-9.]"))
                             ],
                             controller: priceController,
+                            onChanged: (value) =>
+                                bookToEdit.price = double.parse(value),
                           ),
                         ),
                 ),
@@ -454,14 +580,51 @@ class _BookDialogState extends State<BookDialog> {
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: !edit
-                    ? FloatingActionButton.extended(
-                        onPressed: () {
-                          setState(() {
-                            edit = true;
-                          });
-                        },
-                        label: const Text("Edit"),
-                        icon: const Icon(Icons.edit),
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          FloatingActionButton.extended(
+                            onPressed: () => showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text("Delete this book"),
+                                content: Text(
+                                    "Do you really want to delete ${widget.book.title}"),
+                                actions: [
+                                  FloatingActionButton.extended(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    icon: const Icon(Icons.arrow_back),
+                                    label: const Text("go back"),
+                                  ),
+                                  FloatingActionButton.extended(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    icon: const Icon(Icons.delete),
+                                    label: const Text("delete"),
+                                  )
+                                ],
+                              ),
+                            ).then(
+                              (value) => Navigator.of(context).pop(),
+                            ),
+                            icon: const Icon(Icons.delete),
+                            label: const Text("Elimina"),
+                            backgroundColor:
+                                Theme.of(context).colorScheme.onError,
+                          ),
+                          FloatingActionButton.extended(
+                            onPressed: () {
+                              setState(() {
+                                edit = true;
+                              });
+                            },
+                            label: const Text("Edit"),
+                            icon: const Icon(Icons.edit),
+                          ),
+                        ],
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -476,9 +639,17 @@ class _BookDialogState extends State<BookDialog> {
                             icon: const Icon(Icons.close),
                           ),
                           FloatingActionButton.extended(
+                            backgroundColor: Colors.green[800],
                             onPressed: () async {
-                              await Provider.of<Library>(context, listen: false)
-                                  .updateBook(bookToEdit);
+                              if (!widget.isNewBook) {
+                                await Provider.of<Library>(context,
+                                        listen: false)
+                                    .updateBook(bookToEdit);
+                              } else {
+                                await Provider.of<Library>(context,
+                                        listen: false)
+                                    .addBook(bookToEdit);
+                              }
                               setState(() {
                                 edit = false;
                               });
@@ -491,7 +662,7 @@ class _BookDialogState extends State<BookDialog> {
                           ),
                         ],
                       ),
-              )
+              ),
             ],
           ),
         ],

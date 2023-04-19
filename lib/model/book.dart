@@ -18,10 +18,10 @@ class Book {
         purchased = 1,
         read = 0,
         title = "",
-        type = "",
-        status = "",
-        publisher = "",
-        price = 0.0,
+        type = "Manga",
+        status = "Plan To Read",
+        publisher = "JPOP",
+        price = 1.0,
         rating = 0.0,
         comment = "";
 
