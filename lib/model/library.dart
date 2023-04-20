@@ -11,7 +11,7 @@ class Library extends ChangeNotifier {
 
   UnmodifiableListView<Book> get list => UnmodifiableListView(_list);
 
-  BaseClient _client = BaseClient();
+  final BaseClient _client = BaseClient();
 
   List<Book> filterBooks(String sType, String sStatus, String sPublisher) {
     if (sType == "All" && sStatus == "All" && sPublisher == "All") return list;
@@ -41,6 +41,14 @@ class Library extends ChangeNotifier {
   Future<void> updateBook(Book book) async {
     await _client.setupCookieForRequest();
     await _client.dio.put('/api/books', data: book.toJson());
+    await fetchBooks();
+  }
+
+  Future<void> deleteBook(Book book) async {
+    await _client.setupCookieForRequest();
+    await _client.dio.delete(
+      '/api/books/${book.id}',
+    );
     await fetchBooks();
   }
 }

@@ -1,13 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
 import 'package:flutter/material.dart';
+import 'package:libreria_flutter/model/dio_client.dart';
 import 'package:libreria_flutter/model/user.dart';
-import 'package:path_provider/path_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -73,12 +68,6 @@ class _LoginPageState extends State<LoginPage> {
                     if (value == null || value.isEmpty) {
                       return "Please enter some text";
                     }
-                    //explain the regex
-                    // if (!RegExp(
-                    //         r"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~%]).{8,}$")
-                    //     .hasMatch(value)) {
-                    //   return "Password must contain at least 8 characters, one uppercase, one lowercase, \n one number and one special character";
-                    // }
                     return null;
                   },
                 ),
@@ -89,18 +78,11 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text("Login"),
                   onPressed: () async {
                     if (formKey.currentState!.validate()) {
-                      final dio = Dio();
-                      final Directory appDocDir =
-                          await getApplicationDocumentsDirectory();
-                      final String appDocPath = appDocDir.path;
-                      final jar = PersistCookieJar(
-                        ignoreExpires: false,
-                        storage: FileStorage("$appDocPath/.cookies/"),
-                      );
-                      dio.interceptors.add(CookieManager(jar));
+                      BaseClient client = BaseClient();
                       try {
-                        final response = await dio.post(
-                          'https://mia-libreria.vercel.app/api/auth/login',
+                        await client.setupCookieForRequest();
+                        final response = await client.dio.post(
+                          '/api/auth/login',
                           data: {
                             "email": emailController.text,
                             "password": passwordController.text
@@ -112,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       } on DioError catch (error) {
                         if (context.mounted) {
-                          if(error.response!.statusCode != 500) {
+                          if (error.response?.statusCode != 500) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Invalid credentials'),
@@ -129,7 +111,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             );
                           }
-
                         }
                       }
                     }

@@ -584,32 +584,45 @@ class _BookDialogState extends State<BookDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           FloatingActionButton.extended(
-                            onPressed: () => showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text("Delete this book"),
-                                content: Text(
-                                    "Do you really want to delete ${widget.book.title}"),
-                                actions: [
-                                  FloatingActionButton.extended(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    icon: const Icon(Icons.arrow_back),
-                                    label: const Text("go back"),
-                                  ),
-                                  FloatingActionButton.extended(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    icon: const Icon(Icons.delete),
-                                    label: const Text("delete"),
-                                  )
-                                ],
-                              ),
-                            ).then(
-                              (value) => Navigator.of(context).pop(),
-                            ),
+                            onPressed: bookToEdit.id == ""
+                                ? null
+                                : () => showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text("Delete this book"),
+                                        content: Text(
+                                            "Do you really want to delete ${widget.book}"),
+                                        actions: [
+                                          FloatingActionButton.extended(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            icon: const Icon(Icons.arrow_back),
+                                            label: const Text("go back"),
+                                          ),
+                                          FloatingActionButton.extended(
+                                            onPressed: bookToEdit.id == ""
+                                                ? null
+                                                : () {
+                                                    Provider.of<Library>(
+                                                            context,
+                                                            listen: false)
+                                                        .deleteBook(
+                                                            widget.book);
+                                                    Navigator.of(context).pop();
+                                                  },
+                                            icon: const Icon(Icons.delete),
+                                            label: const Text("delete"),
+                                            backgroundColor: Theme.of(context)
+                                                .buttonTheme
+                                                .colorScheme!
+                                                .onError,
+                                          )
+                                        ],
+                                      ),
+                                    ).then(
+                                      (value) => Navigator.of(context).pop(),
+                                    ),
                             icon: const Icon(Icons.delete),
                             label: const Text("Elimina"),
                             backgroundColor:
