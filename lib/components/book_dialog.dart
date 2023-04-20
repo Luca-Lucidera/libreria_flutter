@@ -277,7 +277,7 @@ class _BookDialogState extends State<BookDialog> {
                                       builder: (_) => AlertDialog(
                                         title: const Text("Delete this book"),
                                         content: Text(
-                                            "Do you really want to delete ${widget.book}"),
+                                            "Do you really want to delete ${widget.book.title}"),
                                         actions: [
                                           FloatingActionButton.extended(
                                             onPressed: () {
@@ -302,7 +302,12 @@ class _BookDialogState extends State<BookDialog> {
                                             backgroundColor: Theme.of(context)
                                                 .buttonTheme
                                                 .colorScheme!
-                                                .onError,
+                                                .tertiaryContainer,
+                                            extendedTextStyle: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onTertiaryContainer,
+                                            ),
                                           )
                                         ],
                                       ),
@@ -312,7 +317,7 @@ class _BookDialogState extends State<BookDialog> {
                             icon: const Icon(Icons.delete),
                             label: const Text("Elimina"),
                             backgroundColor:
-                                Theme.of(context).colorScheme.onError,
+                                Theme.of(context).colorScheme.tertiaryContainer,
                           ),
                           FloatingActionButton.extended(
                             onPressed: () {
